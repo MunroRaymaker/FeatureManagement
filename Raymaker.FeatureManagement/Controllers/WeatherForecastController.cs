@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
+using Microsoft.FeatureManagement.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,14 +19,17 @@ namespace Raymaker.FeatureManagement.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
+        private readonly IFeatureManager _featureManager;
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, IFeatureManager featureManager)
         {
             _logger = logger;
+            _featureManager = featureManager;
         }
 
         [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
+        [FeatureGate(MyFeatureFlags.FeatureA)]
+        public async Task<IEnumerable<WeatherForecast>> GetCities()
         {
             var rng = new Random();
             return Enumerable.Range(1, 5).Select(index => new WeatherForecast
@@ -34,6 +39,27 @@ namespace Raymaker.FeatureManagement.Controllers
                 Summary = Summaries[rng.Next(Summaries.Length)]
             })
             .ToArray();
+        }
+
+        [HttpGet("{id}")]
+        public async Task<WeatherForecast> GetByCity(string id)
+        {
+            if (await _featureManager.IsEnabledAsync("FeatureC"))
+            {
+                return new WeatherForecast
+                {
+                    Date = DateTime.Now,
+                    TemperatureC = 5,
+                    Summary = "Chilly winters day in " + id
+                };
+            }
+
+            return new WeatherForecast
+            {
+                Date = DateTime.Now,
+                TemperatureC = 26,
+                Summary = "Hot summers day in " + id
+            };
         }
     }
 }
