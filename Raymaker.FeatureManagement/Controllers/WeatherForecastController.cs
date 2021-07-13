@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Raymaker.FeatureManagement.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class WeatherForecastController : ControllerBase
     {
         private static readonly string[] Summaries = new[]
@@ -27,6 +27,7 @@ namespace Raymaker.FeatureManagement.Controllers
             _featureManager = featureManager;
         }
 
+        // GET weatherforecast/
         [HttpGet]
         [FeatureGate(MyFeatureFlags.FeatureA)]
         public async Task<IEnumerable<WeatherForecast>> GetCities()
@@ -41,8 +42,9 @@ namespace Raymaker.FeatureManagement.Controllers
             .ToArray();
         }
 
-        [HttpGet("{id}")]
-        public async Task<WeatherForecast> GetByCity(string id)
+        // GET weatherforecast/getByCity/CPH
+        [HttpGet("GetByCity/{name}")]
+        public async Task<WeatherForecast> GetByCity(string name)
         {
             if (await _featureManager.IsEnabledAsync("FeatureC"))
             {
@@ -50,7 +52,7 @@ namespace Raymaker.FeatureManagement.Controllers
                 {
                     Date = DateTime.Now,
                     TemperatureC = 5,
-                    Summary = "Chilly winters day in " + id
+                    Summary = "Chilly winters day in " + name
                 };
             }
 
@@ -58,7 +60,21 @@ namespace Raymaker.FeatureManagement.Controllers
             {
                 Date = DateTime.Now,
                 TemperatureC = 26,
-                Summary = "Hot summers day in " + id
+                Summary = "Hot summers day in " + name
+            };
+        }
+
+        // GET weatherforecast/getBySeason/summer
+        [HttpGet("GetBySeason/{season}")]
+        [FeatureGate(MyFeatureFlags.FeatureHoliday)]
+        public WeatherForecast GetBySeason(string season)
+        {
+            var rnd = new Random();
+            return new WeatherForecast
+            {
+                Date = DateTime.Now,
+                TemperatureC = rnd.Next(-5,30),
+                Summary = "Happy holidays in " + season + ". " + DateTime.UtcNow.ToString("O")
             };
         }
     }
